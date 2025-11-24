@@ -1,13 +1,11 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Module, ModulePage, ModulePageContent, ModulePageContentType } from '../types';
 import { Card } from './common/Card';
 import { Modal } from './common/Modal';
 import { ICONS, SpinnerIcon } from '../constants/index';
-import { useAdminData } from '../contexts/AdminDataContext'; // Changed import
+import { useAdminData } from '../contexts/AdminDataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigation } from '../contexts/NavigationContext';
-import { useSettings } from '../contexts/SettingsContext';
 import { useToast } from '../contexts/ToastContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from './firebaseClient';
@@ -146,10 +144,9 @@ const AlignmentControls: React.FC<{ onAlignChange: (align: 'left' | 'center' | '
 
 const AdminCreateModule: React.FC = () => {
     const { user } = useAuth();
-    const { handleSaveModule, handleUpdateModule, isSubmitting } = useAdminData(); // Refactored here
+    const { handleSaveModule, handleUpdateModule, isSubmitting } = useAdminData();
     const { setCurrentPage, editingModule, exitEditingModule } = useNavigation();
     const { addToast } = useToast();
-    const { theme } = useSettings();
 
     // Metadata State
     const [title, setTitle] = useState('');
@@ -185,20 +182,18 @@ const AdminCreateModule: React.FC = () => {
             setDifficulty(editingModule.difficulty || 'Fácil');
             setDuration(editingModule.duration || '');
             
-            // Handle Series Multi-select backward compatibility
             if (Array.isArray(editingModule.series)) {
                 setSelectedSeries(editingModule.series);
             } else if (editingModule.series) {
                 setSelectedSeries([editingModule.series]);
             }
 
-            // Handle Subjects Multi-select backward compatibility
             const subjects = editingModule.subjects || (editingModule.materia ? (Array.isArray(editingModule.materia) ? editingModule.materia : [editingModule.materia]) : []);
             setSelectedSubjects(subjects);
 
-            // Fetch content if not present (Split pattern)
             const loadPages = async () => {
                 if (editingModule.pages && editingModule.pages.length > 0) {
+                    // Deep copy to prevent mutating the context directly before saving
                     setPages(JSON.parse(JSON.stringify(editingModule.pages)));
                 } else {
                     setIsLoadingContent(true);
@@ -208,7 +203,6 @@ const AdminCreateModule: React.FC = () => {
                         if (docSnap.exists() && docSnap.data().pages) {
                             setPages(docSnap.data().pages);
                         } else {
-                            // Fallback: empty module
                             setPages([{ id: Date.now(), title: 'Página 1', content: [] }]);
                         }
                     } catch (err) {
@@ -223,7 +217,6 @@ const AdminCreateModule: React.FC = () => {
             loadPages();
 
         } else {
-            // Defaults for new module
              setSelectedSeries([SCHOOL_YEARS[0]]);
              setSelectedSubjects(['História']);
              setPages([{ id: Date.now(), title: 'Página 1', content: [] }]);
@@ -302,9 +295,7 @@ const AdminCreateModule: React.FC = () => {
         setGeneratedContent(null);
         setGenerationError(null);
         try {
-            // Lazy Loading da Biblioteca de IA
             const { GoogleGenAI } = await import('@google/genai');
-            
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const blockTypeLabel = BLOCK_CONFIG.find(b => b.type === aiBlockType)?.label || aiBlockType;
             const userPrompt = `Gere um conteúdo do tipo "${blockTypeLabel}" sobre o seguinte tópico: "${aiPrompt}". A resposta deve ser direta e pronta para ser usada em uma aula. - Se for uma lista, retorne cada item em uma nova linha, sem marcadores. - Se for um título, retorne apenas o texto do título. - Se for um parágrafo, retorne um texto coeso. - Se for uma citação, retorne apenas o texto da citação, sem aspas.`;
@@ -349,53 +340,6 @@ const AdminCreateModule: React.FC = () => {
         closeAIModal();
     };
 
-    const renderBlock = (pageId: number, block: ModulePageContent, index: number) => {
-        const inputClasses = "w-full p-2 border-gray-300 rounded-md bg-white text-black dark:bg-slate-800 dark:border-slate-600 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-indigo-500 focus-visible:border-indigo-500";
-        
-        // Explicit mapping for alignment classes
-        const alignMap: Record<string, string> = {
-            left: 'text-left',
-            center: 'text-center',
-            right: 'text-right',
-            justify: 'text-justify'
-        };
-        const alignClass = block.align ? alignMap[block.align] : 'text-left';
-        const hasAlignment = block.type === 'title' || block.type === 'paragraph';
-
-        return (
-             <div className="p-4 bg-slate-50 border rounded-lg relative group dark:bg-slate-700/50 dark:border-slate-700 hc-bg-override hc-border-override">
-                <div className="space-y-2">
-                    {block.type === 'title' && <input type="text" placeholder="Título" value={block.content as string} onChange={e => updateBlock(pageId, index, { content: e.target.value })} className={`${inputClasses} text-2xl font-bold ${alignClass}`} />}
-                    {block.type === 'paragraph' && <textarea placeholder="Parágrafo" value={block.content as string} onChange={e => updateBlock(pageId, index, { content: e.target.value })} rows={4} className={`${inputClasses} ${alignClass}`} />}
-                    {block.type === 'list' && <textarea placeholder="Um item por linha" value={(block.content as string[]).join('\n')} onChange={e => updateBlock(pageId, index, { content: e.target.value.split('\n') })} rows={4} className={inputClasses} />}
-                    {block.type === 'quote' && <textarea placeholder="Citação" value={block.content as string} onChange={e => updateBlock(pageId, index, { content: e.target.value })} rows={2} className={`${inputClasses} italic`} />}
-                    {block.type === 'image' && (
-                        <div className="space-y-2">
-                             <input type="text" placeholder="URL da Imagem" value={block.content as string} onChange={e => updateBlock(pageId, index, { content: e.target.value })} className={inputClasses} />
-                             <input type="text" placeholder="Descrição da Imagem" value={block.alt || ''} onChange={e => updateBlock(pageId, index, { alt: e.target.value })} className={inputClasses} />
-                        </div>
-                    )}
-                    {block.type === 'video' && <input type="text" placeholder="URL do Vídeo (YouTube)" value={block.content as string} onChange={e => updateBlock(pageId, index, { content: e.target.value })} className={inputClasses} />}
-                    {block.type === 'divider' && <div className="w-full h-px bg-slate-300 dark:bg-slate-600 my-4" />}
-                    
-                    {hasAlignment && (
-                        <div className="pt-2">
-                            <AlignmentControls 
-                                onAlignChange={(align) => updateBlock(pageId, index, { align })} 
-                                currentAlign={block.align} 
-                            />
-                        </div>
-                    )}
-                </div>
-                <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                     <button type="button" onClick={() => moveBlock(pageId, index, 'up')} disabled={index === 0} className="p-1.5 bg-white border rounded-md shadow-sm disabled:opacity-30 dark:bg-slate-600 dark:border-slate-500 hc-button-override">↑</button>
-                     <button type="button" onClick={() => moveBlock(pageId, index, 'down')} disabled={index === pages.find(p => p.id === pageId)!.content.length - 1} className="p-1.5 bg-white border rounded-md shadow-sm disabled:opacity-30 dark:bg-slate-600 dark:border-slate-500 hc-button-override">↓</button>
-                     <button type="button" onClick={() => removeBlock(pageId, index)} className="p-1.5 bg-red-500 text-white border rounded-md shadow-sm">×</button>
-                </div>
-            </div>
-        );
-    };
-
     const handleSave = async () => {
         if (!title || selectedSeries.length === 0 || selectedSubjects.length === 0 || isSubmitting) {
             addToast("Preencha todos os campos obrigatórios (Título, Série e Matéria).", "error");
@@ -406,11 +350,11 @@ const AdminCreateModule: React.FC = () => {
             title, description, coverImageUrl, videoUrl, difficulty, duration,
             pages,
             visibility: 'public',
-            classIds: [], // Admins create public modules, no specific class ID.
+            classIds: [],
             status: 'Ativo',
-            series: selectedSeries, // Saving as array
-            materia: selectedSubjects, // Saving as array (mapping subjects to materia field for now, or use new field)
-            subjects: selectedSubjects // Saving as explicit array
+            series: selectedSeries,
+            materia: selectedSubjects,
+            subjects: selectedSubjects
         };
 
         if (editingModule) {
@@ -550,5 +494,97 @@ const AdminCreateModule: React.FC = () => {
                     <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">Conteúdo</h3>
                     <button onClick={addPage} className="px-4 py-2 bg-white border border-gray-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 hc-button-override">Nova Página</button>
                 </div>
-                <div className="space-y-6">
-                    
+                
+                <div className="space-y-8">
+                    {pages.map((page, pageIndex) => (
+                        <div key={page.id} className="border rounded-lg p-4 bg-slate-50/50 dark:bg-slate-800/50 dark:border-slate-700">
+                            <div className="flex justify-between items-center mb-4">
+                                <h4 className="font-bold text-slate-700 dark:text-slate-200">{page.title}</h4>
+                                <div className="flex items-center space-x-2">
+                                    <button onClick={() => openAIModal(page.id)} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 mr-2 flex items-center">
+                                        <div className="h-3 w-3 mr-1">{ICONS.ai_generate}</div> IA
+                                    </button>
+                                    <button onClick={() => removePage(page.id)} disabled={pages.length === 1} className="text-red-500 hover:text-red-700 disabled:opacity-30">Excluir Página</button>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                {page.content.map((block, blockIndex) => {
+                                    const inputClasses = "w-full p-2 border-gray-300 rounded-md bg-white text-black dark:bg-slate-800 dark:border-slate-600 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-indigo-500 focus-visible:border-indigo-500";
+                                    const alignMap: Record<string, string> = { left: 'text-left', center: 'text-center', right: 'text-right', justify: 'text-justify' };
+                                    const alignClass = block.align ? alignMap[block.align] : 'text-left';
+                                    const hasAlignment = block.type === 'title' || block.type === 'paragraph';
+
+                                    return (
+                                        <div key={blockIndex} className="p-4 bg-white dark:bg-slate-800 border rounded-lg relative group dark:border-slate-700 shadow-sm">
+                                            <div className="space-y-2">
+                                                {block.type === 'title' && <input type="text" placeholder="Título" value={block.content as string} onChange={e => updateBlock(page.id, blockIndex, { content: e.target.value })} className={`${inputClasses} text-2xl font-bold ${alignClass}`} />}
+                                                {block.type === 'paragraph' && <textarea placeholder="Parágrafo" value={block.content as string} onChange={e => updateBlock(page.id, blockIndex, { content: e.target.value })} rows={4} className={`${inputClasses} ${alignClass}`} />}
+                                                {block.type === 'list' && <textarea placeholder="Um item por linha" value={(block.content as string[]).join('\n')} onChange={e => updateBlock(page.id, blockIndex, { content: e.target.value.split('\n') })} rows={4} className={inputClasses} />}
+                                                {block.type === 'quote' && <textarea placeholder="Citação" value={block.content as string} onChange={e => updateBlock(page.id, blockIndex, { content: e.target.value })} rows={2} className={`${inputClasses} italic`} />}
+                                                {block.type === 'image' && (
+                                                    <div className="space-y-2">
+                                                        <input type="text" placeholder="URL da Imagem" value={block.content as string} onChange={e => updateBlock(page.id, blockIndex, { content: e.target.value })} className={inputClasses} />
+                                                        <input type="text" placeholder="Descrição da Imagem" value={block.alt || ''} onChange={e => updateBlock(page.id, blockIndex, { alt: e.target.value })} className={inputClasses} />
+                                                    </div>
+                                                )}
+                                                {block.type === 'video' && <input type="text" placeholder="URL do Vídeo (YouTube)" value={block.content as string} onChange={e => updateBlock(page.id, blockIndex, { content: e.target.value })} className={inputClasses} />}
+                                                {block.type === 'divider' && <div className="w-full h-px bg-slate-300 dark:bg-slate-600 my-4" />}
+                                                
+                                                {hasAlignment && (
+                                                    <div className="pt-2">
+                                                        <AlignmentControls 
+                                                            onAlignChange={(align) => updateBlock(page.id, blockIndex, { align })} 
+                                                            currentAlign={block.align} 
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button type="button" onClick={() => moveBlock(page.id, blockIndex, 'up')} disabled={blockIndex === 0} className="p-1.5 bg-slate-100 border rounded-md shadow-sm disabled:opacity-30 dark:bg-slate-700 dark:border-slate-600 hover:bg-slate-200">↑</button>
+                                                <button type="button" onClick={() => moveBlock(page.id, blockIndex, 'down')} disabled={blockIndex === page.content.length - 1} className="p-1.5 bg-slate-100 border rounded-md shadow-sm disabled:opacity-30 dark:bg-slate-700 dark:border-slate-600 hover:bg-slate-200">↓</button>
+                                                <button type="button" onClick={() => removeBlock(page.id, blockIndex)} className="p-1.5 bg-red-100 text-red-600 border border-red-200 rounded-md shadow-sm hover:bg-red-200">×</button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+                                {BLOCK_CONFIG.map(block => (
+                                    <button
+                                        key={block.type}
+                                        onClick={() => addBlock(page.id, block.type)}
+                                        className="flex flex-col items-center justify-center p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700 transition-colors shadow-sm"
+                                    >
+                                        <div className="text-indigo-500 dark:text-indigo-400 mb-1">{block.icon}</div>
+                                        <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">{block.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </Card>
+
+            <div className="flex justify-end space-x-4 pb-8">
+                <button 
+                    onClick={handleCancel} 
+                    className="px-6 py-2 bg-white text-slate-700 font-semibold rounded-lg hover:bg-slate-50 border border-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-600 hc-button-override"
+                >
+                    Cancelar
+                </button>
+                <button 
+                    onClick={handleSave} 
+                    disabled={isSubmitting}
+                    className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 shadow-lg disabled:opacity-50 flex items-center space-x-2 hc-button-primary-override"
+                >
+                     {isSubmitting ? <SpinnerIcon className="h-5 w-5 text-white" /> : <div className="h-5 w-5">{ICONS.plus}</div>}
+                    <span>{editingModule ? 'Salvar Alterações' : 'Criar Módulo'}</span>
+                </button>
+            </div>
+        </div>
+    );
+};
+
+export default AdminCreateModule;
