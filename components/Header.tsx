@@ -1,4 +1,4 @@
-
+// FILE: components/Header.tsx
 import React, { useContext } from 'react';
 import { ICONS } from '../constants/index';
 import { useAuth } from '../contexts/AuthContext';
@@ -24,8 +24,8 @@ export const Header: React.FC<HeaderProps> = ({ title, isScrolled }) => {
             notificationCount = notifContext.unreadNotificationCount;
         } catch { /* ignore */ }
     } else if (userRole === 'admin') {
-        const adminData = useContext(AdminDataContext);
-        notificationCount = adminData?.unreadNotificationCount || 0;
+        // Admin currently does not track unread notifications in global context
+        notificationCount = 0;
     }
     
     // Only show notification button for students (and possibly admin if logic persists there)

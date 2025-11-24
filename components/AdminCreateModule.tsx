@@ -1,3 +1,4 @@
+// FILE: components/AdminCreateModule.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Module, ModulePage, ModulePageContent, ModulePageContentType } from '../types';
 import { Card } from './common/Card';
@@ -9,6 +10,7 @@ import { useNavigation } from '../contexts/NavigationContext';
 import { useToast } from '../contexts/ToastContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from './firebaseClient';
+import { GoogleGenAI } from "@google/genai";
 
 // List of subjects for Admins
 const ADMIN_SUBJECTS = [
@@ -193,7 +195,6 @@ const AdminCreateModule: React.FC = () => {
 
             const loadPages = async () => {
                 if (editingModule.pages && editingModule.pages.length > 0) {
-                    // Deep copy to prevent mutating the context directly before saving
                     setPages(JSON.parse(JSON.stringify(editingModule.pages)));
                 } else {
                     setIsLoadingContent(true);
@@ -221,7 +222,7 @@ const AdminCreateModule: React.FC = () => {
              setSelectedSubjects(['História']);
              setPages([{ id: Date.now(), title: 'Página 1', content: [] }]);
         }
-    }, [editingModule, addToast]);
+    }, [editingModule, addToast, user?.series]);
 
     const addPage = () => setPages(prev => [...prev, { id: Date.now(), title: `Página ${prev.length + 1}`, content: [] }]);
     
@@ -294,8 +295,8 @@ const AdminCreateModule: React.FC = () => {
         setIsGenerating(true);
         setGeneratedContent(null);
         setGenerationError(null);
+        
         try {
-            const { GoogleGenAI } = await import('@google/genai');
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const blockTypeLabel = BLOCK_CONFIG.find(b => b.type === aiBlockType)?.label || aiBlockType;
             const userPrompt = `Gere um conteúdo do tipo "${blockTypeLabel}" sobre o seguinte tópico: "${aiPrompt}". A resposta deve ser direta e pronta para ser usada em uma aula. - Se for uma lista, retorne cada item em uma nova linha, sem marcadores. - Se for um título, retorne apenas o texto do título. - Se for um parágrafo, retorne um texto coeso. - Se for uma citação, retorne apenas o texto da citação, sem aspas.`;

@@ -1,4 +1,4 @@
-
+// FILE: vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -71,6 +71,9 @@ export default defineConfig({
       }
     })
   ],
+  define: {
+    'process.env.API_KEY': JSON.stringify(process.env.API_KEY)
+  },
   build: {
     rollupOptions: {
       output: {

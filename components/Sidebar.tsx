@@ -1,4 +1,4 @@
-
+// FILE: components/Sidebar.tsx
 import React, { useContext } from 'react';
 import type { Page } from '../types';
 import { Logo, ICONS } from '../constants/index';
@@ -84,8 +84,8 @@ export const Sidebar: React.FC = () => {
             pendingCount = academicContext.dashboardStats.totalPendingSubmissions;
         } catch { /* ignore */ }
     } else if (userRole === 'admin') {
-        const adminData = useContext(AdminDataContext);
-        notificationCount = adminData?.unreadNotificationCount || 0;
+        // Admin currently does not track unread notifications in global context
+        notificationCount = 0;
     }
     
     const navItems = userRole === 'admin' ? adminNavItems 

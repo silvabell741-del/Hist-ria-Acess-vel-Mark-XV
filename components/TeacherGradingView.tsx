@@ -1,10 +1,10 @@
-
+// FILE: components/TeacherGradingView.tsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card } from './common/Card';
 import { ICONS, SpinnerIcon } from '../constants/index';
 import { useTeacherAcademicContext } from '../contexts/TeacherAcademicContext';
 import { useNavigation } from '../contexts/NavigationContext';
-import type { Activity, ActivitySubmission } from '../types';
+import type { Activity, ActivitySubmission, ActivityItem } from '../types';
 import { collection, query, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from './firebaseClient';
 import { useToast } from '../contexts/ToastContext';
@@ -121,7 +121,7 @@ const TeacherGradingView: React.FC = () => {
                 options: q.choices,
                 correctOptionId: q.correctAnswerId,
                 points: 1
-            }));
+            })) as ActivityItem[];
         }
         return [];
     }, [activity]);
