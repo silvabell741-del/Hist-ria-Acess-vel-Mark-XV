@@ -297,8 +297,9 @@ const AdminCreateModule: React.FC = () => {
         setGenerationError(null);
         
         try {
-            // Use static import instead of dynamic to ensure consistency
-            const apiKey = process.env.API_KEY;
+            // Use static import from top-level
+            // @ts-ignore
+            const apiKey = process.env.API_KEY as string;
             if (!apiKey) throw new Error("API Key não configurada.");
 
             const ai = new GoogleGenAI({ apiKey });
