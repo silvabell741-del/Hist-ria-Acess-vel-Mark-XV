@@ -297,7 +297,7 @@ const AdminCreateModule: React.FC = () => {
         setGenerationError(null);
         
         try {
-            const apiKey = process.env.API_KEY as string;
+            const apiKey = process.env.API_KEY;
             if (!apiKey) throw new Error("API Key não configurada.");
 
             const ai = new GoogleGenAI({ apiKey });
