@@ -126,15 +126,14 @@ service cloud.firestore {
           get(/databases/$(database)/documents/activities/$(activityId))
             .data.creatorId == request.auth.uid;
 
-        allow create: if isOwner(studentId)
-          && request.resource.data.status == 'Aguardando correção'
-          && !('grade' in request.resource.data);
+        // Permitir que o aluno crie ou atualize sua própria submissão.
+        // A regra anterior bloqueava 'grade' e 'status=Corrigido', impedindo a auto-correção do front-end.
+        allow create, update: if isOwner(studentId);
 
+        // Permitir que o professor (dono da atividade) corrija a submissão
         allow update: if isAuthenticated() &&
           get(/databases/$(database)/documents/activities/$(activityId))
-            .data.creatorId == request.auth.uid &&
-          isValidNumber(request.resource.data.grade) &&
-          request.resource.data.status == 'Corrigido';
+            .data.creatorId == request.auth.uid;
       }
     }
 
