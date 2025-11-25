@@ -4,7 +4,7 @@ import React, { createContext, useContext } from 'react';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
 import { useTeacherClasses } from '../hooks/teacher/useTeacherClasses';
-import type { TeacherClass, AttendanceSession, Turno } from '../types';
+import type { TeacherClass, AttendanceSession, Turno, AttendanceStatus } from '../types';
 
 export interface TeacherClassContextType {
     teacherClasses: TeacherClass[];
@@ -17,7 +17,7 @@ export interface TeacherClassContextType {
     handleCreateClass: (name: string) => Promise<void>;
     handleArchiveClass: (classId: string) => Promise<void>; // Nova função
     handleCreateAttendanceSession: (classId: string, date: string, turno: Turno, horario: number) => Promise<void>;
-    handleUpdateAttendanceStatus: (sessionId: string, recordId: string, status: 'presente' | 'ausente') => Promise<void>;
+    handleUpdateAttendanceStatus: (sessionId: string, recordId: string, status: AttendanceStatus) => Promise<void>;
     handleLeaveClass: (classId: string) => Promise<void>;
     getAttendanceSession: (sessionId: string) => Promise<AttendanceSession | null>;
     setTeacherClasses: React.Dispatch<React.SetStateAction<TeacherClass[]>>;

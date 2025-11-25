@@ -1,11 +1,12 @@
 
+
 import { useState, useCallback, useEffect } from 'react';
 import { 
     collection, query, where, getDocs, doc, addDoc, serverTimestamp, getDoc, 
     writeBatch, updateDoc, arrayUnion, arrayRemove, deleteField 
 } from 'firebase/firestore';
 import { db } from '../../components/firebaseClient';
-import type { TeacherClass, AttendanceSession, Turno, User, Activity, ClassSummary } from '../../types';
+import type { TeacherClass, AttendanceSession, Turno, User, Activity, ClassSummary, AttendanceStatus } from '../../types';
 
 export function useTeacherClasses(user: User | null, addToast: (msg: string, type: any) => void) {
     const [teacherClasses, setTeacherClasses] = useState<TeacherClass[]>([]);
@@ -380,7 +381,7 @@ export function useTeacherClasses(user: User | null, addToast: (msg: string, typ
         } catch (error) { console.error(error); addToast("Erro ao criar chamada.", "error"); } finally { setIsSubmittingClass(false); }
     }, [user, teacherClasses, archivedClasses, addToast]);
 
-    const handleUpdateAttendanceStatus = useCallback(async (sessionId: string, recordId: string, status: 'presente' | 'ausente') => {
+    const handleUpdateAttendanceStatus = useCallback(async (sessionId: string, recordId: string, status: AttendanceStatus) => {
         try {
             const recordRef = doc(db, "attendance_sessions", sessionId, "records", recordId);
             await updateDoc(recordRef, { status, updatedAt: serverTimestamp() });
