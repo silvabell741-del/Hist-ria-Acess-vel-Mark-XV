@@ -43,7 +43,7 @@ export function useTeacherContent(
                     where("status", "==", "Pendente")
                 );
                 let snapPending;
-                if (!forceRefresh) try { snapPending = await getDocs(qPending, { source: 'cache' }); } catch {}
+                if (!forceRefresh) try { snapPending = await getDocs(qPending); } catch {}
                 if (!snapPending || snapPending.empty) snapPending = await getDocs(qPending);
                 
                 const loadedPendingList: PendingActivity[] = [];
@@ -88,7 +88,7 @@ export function useTeacherContent(
                     where("status", "==", "Rascunho")
                 );
                 let snapDrafts;
-                if (!forceRefresh) try { snapDrafts = await getDocs(qDrafts, { source: 'cache' }); } catch {}
+                if (!forceRefresh) try { snapDrafts = await getDocs(qDrafts); } catch {}
                 if (!snapDrafts || snapDrafts.empty) snapDrafts = await getDocs(qDrafts);
 
                 const drafts = snapDrafts.docs.map(d => ({ 
@@ -110,7 +110,7 @@ export function useTeacherContent(
                     where("status", "==", "Rascunho")
                 );
                 let snapDraftModules;
-                if (!forceRefresh) try { snapDraftModules = await getDocs(qDraftModules, { source: 'cache' }); } catch {}
+                if (!forceRefresh) try { snapDraftModules = await getDocs(qDraftModules); } catch {}
                 if (!snapDraftModules || snapDraftModules.empty) snapDraftModules = await getDocs(qDraftModules);
 
                 const draftsMod = snapDraftModules.docs.map(d => ({

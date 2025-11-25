@@ -400,7 +400,7 @@ export interface AttendanceSession {
   createdAt: string; // ISO string timestamp
 }
 
-export type AttendanceStatus = 'presente' | 'ausente';
+export type AttendanceStatus = 'presente' | 'ausente' | 'pendente';
 
 export interface AttendanceRecord {
   id: string;
