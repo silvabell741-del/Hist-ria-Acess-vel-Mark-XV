@@ -1,14 +1,11 @@
 // FILE: components/Sidebar.tsx
-import React, { useContext } from 'react';
+import React from 'react';
 import type { Page } from '../types';
 import { Logo, ICONS } from '../constants/index';
 import { useNavigation } from '../contexts/NavigationContext';
 import { useAuth } from '../contexts/AuthContext';
-// Usar hooks específicos para performance
 import { useStudentNotificationsContext } from '../contexts/StudentNotificationContext';
 import { useTeacherAcademicContext } from '../contexts/TeacherAcademicContext';
-import { AdminDataContext } from '../contexts/AdminDataContext';
-
 
 const studentNavItems: { id: Page, label: string }[] = [
     { id: 'modules', label: 'Módulos' },
@@ -38,7 +35,6 @@ const adminNavItems: { id: Page, label: string }[] = [
     { id: 'admin_tests', label: 'Testes' },
 ];
 
-
 const iconMap: { [key in Page]?: React.ReactNode } = {
     // Student
     modules: ICONS['modules'],
@@ -66,34 +62,38 @@ const iconMap: { [key in Page]?: React.ReactNode } = {
     admin_tests: ICONS['admin_tests'],
 }
 
+// --- Helper Components to safely use hooks ---
+
+const StudentNotificationBadge: React.FC = () => {
+    const { unreadNotificationCount } = useStudentNotificationsContext();
+    if (unreadNotificationCount <= 0) return null;
+    return (
+        <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center" aria-label={`${unreadNotificationCount} novas notificações`}>
+            {unreadNotificationCount}
+        </span>
+    );
+};
+
+const TeacherPendingBadge: React.FC = () => {
+    const { dashboardStats } = useTeacherAcademicContext();
+    const pendingCount = dashboardStats.totalPendingSubmissions;
+    if (pendingCount <= 0) return null;
+    return (
+        <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center" aria-label={`${pendingCount} pendentes`}>
+            {pendingCount}
+        </span>
+    );
+};
+
 export const Sidebar: React.FC = () => {
     const { currentPage, setCurrentPage, isMobileMenuOpen, toggleMobileMenu } = useNavigation();
     const { handleLogout: onLogout, userRole } = useAuth();
-    
-    let notificationCount = 0;
-    let pendingCount = 0;
-
-    if (userRole === 'aluno') {
-        try {
-            const notifContext = useStudentNotificationsContext();
-            notificationCount = notifContext.unreadNotificationCount;
-        } catch { /* ignore */ }
-    } else if (userRole === 'professor') {
-        try {
-            const academicContext = useTeacherAcademicContext();
-            pendingCount = academicContext.dashboardStats.totalPendingSubmissions;
-        } catch { /* ignore */ }
-    } else if (userRole === 'admin') {
-        // Admin currently does not track unread notifications in global context
-        notificationCount = 0;
-    }
     
     const navItems = userRole === 'admin' ? adminNavItems 
                    : userRole === 'professor' ? teacherNavItems 
                    : studentNavItems;
 
     const showProfileLink = true;
-    // Show notifications only for students
     const showNotificationsLink = userRole === 'aluno';
     
     return (
@@ -123,10 +123,8 @@ export const Sidebar: React.FC = () => {
                                 <span aria-hidden="true">{iconMap[item.id]}</span>
                                 <span>{item.label}</span>
                             </div>
-                            {item.id === 'teacher_pending_activities' && pendingCount > 0 && (
-                                <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center" aria-label={`${pendingCount} pendentes`}>
-                                    {pendingCount}
-                                </span>
+                            {item.id === 'teacher_pending_activities' && userRole === 'professor' && (
+                                <TeacherPendingBadge />
                             )}
                         </button>
                     ))}
@@ -144,11 +142,7 @@ export const Sidebar: React.FC = () => {
                                 <span aria-hidden="true">{ICONS['notifications']}</span>
                                 <span>Notificações</span>
                             </div>
-                            {notificationCount > 0 && (
-                                <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center" aria-label={`${notificationCount} novas notificações`}>
-                                    {notificationCount}
-                                </span>
-                            )}
+                            <StudentNotificationBadge />
                         </button>
                      )}
                      {showProfileLink && (

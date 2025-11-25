@@ -109,11 +109,15 @@ const TeacherGradingView: React.FC = () => {
 
     const isLast = currentIndex === -1 || currentIndex === filteredSubmissions.length - 1;
 
-    const items = useMemo(() => {
+    const items = useMemo((): ActivityItem[] => {
         if (!activity) return [];
-        if (activity.items && activity.items.length > 0) return activity.items;
+        
+        if (activity.items && activity.items.length > 0) {
+            return activity.items;
+        }
+        
         if (activity.questions && activity.questions.length > 0) {
-            // Legacy mapping
+            // Legacy mapping strict type
             return activity.questions.map((q: any) => ({
                 id: q.id.toString(),
                 type: 'multiple_choice',
@@ -121,7 +125,7 @@ const TeacherGradingView: React.FC = () => {
                 options: q.choices,
                 correctOptionId: q.correctAnswerId,
                 points: 1
-            })) as ActivityItem[];
+            } as ActivityItem));
         }
         return [];
     }, [activity]);

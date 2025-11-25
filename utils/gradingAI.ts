@@ -15,7 +15,8 @@ export async function generateFeedbackAndGrade(
   maxPoints: number
 ): Promise<GradingResult> {
   // Ensure API Key is present (handled by env var replacement in build or runtime)
-  const apiKey = process.env.API_KEY;
+  // @ts-ignore
+  const apiKey = process.env.API_KEY as string | undefined;
   if (!apiKey) {
     throw new Error("API Key de IA não configurada.");
   }

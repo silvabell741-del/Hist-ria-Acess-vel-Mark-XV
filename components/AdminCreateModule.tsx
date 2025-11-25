@@ -206,7 +206,7 @@ const AdminCreateModule: React.FC = () => {
                         } else {
                             setPages([{ id: Date.now(), title: 'Página 1', content: [] }]);
                         }
-                    } catch (err) {
+                    } catch (err: any) {
                         console.error("Error fetching module content:", err);
                         addToast("Erro ao carregar conteúdo do módulo.", "error");
                         setPages([{ id: Date.now(), title: 'Página 1', content: [] }]);
@@ -297,7 +297,10 @@ const AdminCreateModule: React.FC = () => {
         setGenerationError(null);
         
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const apiKey = process.env.API_KEY as string;
+            if (!apiKey) throw new Error("API Key não configurada.");
+
+            const ai = new GoogleGenAI({ apiKey });
             const blockTypeLabel = BLOCK_CONFIG.find(b => b.type === aiBlockType)?.label || aiBlockType;
             const userPrompt = `Gere um conteúdo do tipo "${blockTypeLabel}" sobre o seguinte tópico: "${aiPrompt}". A resposta deve ser direta e pronta para ser usada em uma aula. - Se for uma lista, retorne cada item em uma nova linha, sem marcadores. - Se for um título, retorne apenas o texto do título. - Se for um parágrafo, retorne um texto coeso. - Se for uma citação, retorne apenas o texto da citação, sem aspas.`;
 
