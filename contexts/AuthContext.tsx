@@ -11,7 +11,8 @@ import {
     signInWithPopup,
     GoogleAuthProvider,
     User as FirebaseUser,
-    updateProfile
+    updateProfile,
+    sendPasswordResetEmail
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
@@ -29,6 +30,7 @@ interface AuthContextType {
     handleLogout: () => void;
     updateUser: (updatedData: Partial<User>) => Promise<void>;
     createUserProfile: (role: Role, series?: string) => Promise<void>;
+    resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -127,6 +129,10 @@ export function AuthProvider({ children }: { children?: ReactNode }) {
                 return 'A senha é muito fraca. Use pelo menos 6 caracteres.';
             case 'auth/popup-closed-by-user':
                 return 'Login com Google cancelado.';
+            case 'auth/missing-email':
+                return 'O email é obrigatório.';
+            case 'auth/invalid-email':
+                return 'O formato do email é inválido.';
             default:
                 return `Ocorreu um erro: ${error.message}`;
         }
@@ -155,6 +161,17 @@ export function AuthProvider({ children }: { children?: ReactNode }) {
             throw new Error(message);
         }
     };
+
+    const resetPassword = useCallback(async (email: string) => {
+        setAuthError(null);
+        try {
+            await sendPasswordResetEmail(auth, email);
+        } catch(error) {
+             const message = handleFirebaseError(error);
+             setAuthError(message);
+             throw new Error(message);
+        }
+    }, []);
 
     const signInWithGoogle = async () => {
         setAuthError(null);
@@ -238,6 +255,7 @@ export function AuthProvider({ children }: { children?: ReactNode }) {
         handleLogout,
         updateUser,
         createUserProfile,
+        resetPassword
     };
 
     return (
