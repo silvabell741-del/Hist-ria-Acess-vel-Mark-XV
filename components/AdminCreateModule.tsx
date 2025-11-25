@@ -297,6 +297,7 @@ const AdminCreateModule: React.FC = () => {
         setGenerationError(null);
         
         try {
+            // Use static import instead of dynamic to ensure consistency
             const apiKey = process.env.API_KEY;
             if (!apiKey) throw new Error("API Key não configurada.");
 
