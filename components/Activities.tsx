@@ -1,5 +1,4 @@
 
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card } from './common/Card';
 import { useStudentAcademic } from '../contexts/StudentAcademicContext';
@@ -9,6 +8,7 @@ import type { Activity } from '../types';
 import { SpinnerIcon } from '../constants/index';
 import { cleanActivity } from '../utils/cleanActivity';
 import { QueryDocumentSnapshot } from 'firebase/firestore';
+import { useSettings } from '../contexts/SettingsContext';
 
 const isRecent = (dateInput?: string | any) => {
     if (!dateInput) return false;
@@ -29,6 +29,11 @@ const isRecent = (dateInput?: string | any) => {
 
 const ActivityCard: React.FC<{ activity: Activity; onClick: () => void }> = ({ activity, onClick }) => {
     const { user } = useAuth();
+    const { theme } = useSettings();
+    const isAurora = theme === 'galactic-aurora';
+    const isDragon = theme === 'dragon-year';
+    const isEmerald = theme === 'emerald-sovereignty';
+
     const studentSubmission = activity.submissions?.find(s => s.studentId === user?.id);
     let statusText: string | null = null;
     let statusColor: string = '';
@@ -40,35 +45,89 @@ const ActivityCard: React.FC<{ activity: Activity; onClick: () => void }> = ({ a
             : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-300';
     }
 
-    const materiaColorMap: { [key: string]: string } = {
-        'História': 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
-        'Geografia': 'bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300',
-        'Ciências': 'bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300',
-        'História Sergipana': 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-    };
-    const materiaColor = activity.materia ? materiaColorMap[activity.materia] || 'bg-gray-100 text-gray-700' : 'bg-gray-100 text-gray-700';
+    // Tag Styles based on Theme
+    let materiaColor = '';
+    let unidadeColor = '';
+    let typeColor = '';
+
+    if (isAurora) {
+        // Galactic Aurora: High contrast, neon colors on black
+        materiaColor = 'bg-black text-[#E0AAFF] border border-[#E0AAFF]/40'; // Neon Purple
+        unidadeColor = 'bg-[#1a1b26] text-white border border-[#2E2F3E]'; // Subtle Dark
+        typeColor = 'bg-black text-[#99F6E4] border border-[#99F6E4]/40'; // Teal/Cyan
+    } else if (isDragon) {
+        // Dragon Year: High Contrast Red/Gold/Jade
+        materiaColor = 'bg-[#5D0E0E] text-[#FFD700] border border-[#B71C1C]'; // Ruby & Gold
+        unidadeColor = 'bg-[#FFF8E7] text-[#3E2723] border border-[#8D6E63]'; // Parchment & Ink
+        typeColor = 'bg-[#2E7D32] text-white border border-[#1B5E20]'; // Jade
+    } else if (isEmerald) {
+        // Emerald Sovereignty (Doom): Dark Metal & Magic
+        materiaColor = 'bg-[#064E3B] text-[#34D399] border border-[#D4AF37]'; // Emerald/Neon Green/Gold
+        unidadeColor = 'bg-[#1F2937] text-[#E5E7EB] border border-[#374151]'; // Gunmetal/Silver/Steel
+        typeColor = 'bg-black text-[#D4AF37] border border-[#D4AF37]'; // Black/Gold
+    } else {
+        // Standard Themes (Improved Light Theme Colors)
+        // Before it was varying shades of gray/slate for unity/type. Now using subtle colors.
+        const materiaColorMap: { [key: string]: string } = {
+            'História': 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
+            'Geografia': 'bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300',
+            'Ciências': 'bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300',
+            'História Sergipana': 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
+        };
+        materiaColor = activity.materia ? materiaColorMap[activity.materia] || 'bg-gray-100 text-gray-700 border border-gray-200' : 'bg-gray-100 text-gray-700 border border-gray-200';
+        
+        unidadeColor = 'bg-blue-50 text-blue-700 border border-blue-100 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600';
+        typeColor = 'bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-600 dark:text-slate-300 dark:border-slate-500';
+    }
 
     const isNew = !studentSubmission && isRecent(activity.createdAt);
     const isRecentlyGraded = studentSubmission?.status === 'Corrigido' && isRecent(studentSubmission.gradedAt);
 
+    // Customize NEW badge for Aurora theme
+    let newBadgeClass = "absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg shadow-sm z-10";
+    if (isAurora) {
+        // Blue Saber style - #00B7FF is Deep Sky Blue
+        newBadgeClass = "absolute top-0 right-0 bg-[#00B7FF] text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg shadow-[0_0_10px_#00B7FF] border-l border-b border-[#00B7FF] z-10";
+    }
+
+    // Acessibilidade: Construção do texto descritivo completo
+    const typeInfo = activity.items ? `${activity.items.length} questões` : activity.type;
+    const dateInfo = activity.dueDate ? `Prazo: ${new Date(activity.dueDate).toLocaleDateString('pt-BR')}` : 'Sem prazo definido';
+    const statusInfo = statusText || 'A fazer';
+    const pointsInfo = `${activity.points} pontos`;
+    
+    // Texto completo para o leitor de tela
+    const fullDescription = `Atividade: ${activity.title}. 
+    Matéria: ${activity.materia || 'Geral'}. 
+    Unidade: ${activity.unidade || 'Geral'}. 
+    Tipo: ${typeInfo}. 
+    Status: ${statusInfo}. 
+    Valor: ${pointsInfo}. 
+    ${dateInfo}.
+    Descrição: ${activity.description}`;
+
     return (
         <Card className="flex flex-col h-full group dark:hover:bg-slate-700/50 cursor-pointer relative overflow-hidden" >
-            <button onClick={onClick} className="text-left flex flex-col h-full w-full">
+            <button 
+                onClick={onClick} 
+                className="text-left flex flex-col h-full w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg"
+                aria-label={fullDescription}
+            >
                 {isNew && (
-                    <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg shadow-sm z-10">
+                    <div className={newBadgeClass} aria-hidden="true">
                         NOVA
                     </div>
                 )}
                 {isRecentlyGraded && (
-                    <div className="absolute top-0 right-0 bg-green-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg shadow-sm z-10">
+                    <div className="absolute top-0 right-0 bg-green-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg shadow-sm z-10" aria-hidden="true">
                         NOTA DISPONÍVEL
                     </div>
                 )}
 
                 <div className="flex-grow">
                     <div className="flex justify-between items-start">
-                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors hc-text-primary pr-4 line-clamp-2">{activity.title}</h3>
-                        <div className="flex flex-col items-end flex-shrink-0 ml-2 space-y-2 mt-6"> 
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors hc-text-primary pr-4 line-clamp-2" aria-hidden="true">{activity.title}</h3>
+                        <div className="flex flex-col items-end flex-shrink-0 ml-2 space-y-2 mt-6" aria-hidden="true"> 
                              {statusText && (
                                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusColor}`}>
                                     {statusText}
@@ -76,16 +135,16 @@ const ActivityCard: React.FC<{ activity: Activity; onClick: () => void }> = ({ a
                             )}
                         </div>
                     </div>
-                     <div className="flex items-center flex-wrap gap-2 mt-3 text-xs font-medium">
-                        {activity.unidade && <span className="px-2 py-1 rounded bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">{activity.unidade}</span>}
+                     <div className="flex items-center flex-wrap gap-2 mt-3 text-xs font-medium" aria-hidden="true">
+                        {activity.unidade && <span className={`px-2 py-1 rounded ${unidadeColor}`}>{activity.unidade}</span>}
                         {activity.materia && <span className={`px-2 py-1 rounded ${materiaColor}`}>{activity.materia}</span>}
-                        <span className="px-2 py-1 rounded bg-slate-200 text-slate-700 dark:bg-slate-600 dark:text-slate-300">
+                        <span className={`px-2 py-1 rounded ${typeColor}`}>
                             {activity.items ? `${activity.items.length} questão(ões)` : activity.type}
                         </span>
                     </div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 flex-grow hc-text-secondary line-clamp-2">{activity.description}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 flex-grow hc-text-secondary line-clamp-2" aria-hidden="true">{activity.description}</p>
                 </div>
-                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center text-sm text-slate-500 dark:text-slate-400 hc-text-secondary">
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center text-sm text-slate-500 dark:text-slate-400 hc-text-secondary" aria-hidden="true">
                     <span className="font-semibold text-slate-600 dark:text-slate-300">{activity.className || 'Turma desconhecida'}</span>
                     <div className="space-x-4">
                         <span>{activity.points} pts</span>
@@ -102,6 +161,8 @@ const Activities: React.FC = () => {
     const { studentClasses, searchActivities } = useStudentAcademic();
     const { openActivity } = useNavigation(); // Using Navigation Context to open activity page
     const { user } = useAuth();
+    const { theme } = useSettings();
+    const isAurora = theme === 'galactic-aurora';
     
     const [displayedActivities, setDisplayedActivities] = useState<Activity[]>([]);
     const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
@@ -181,6 +242,13 @@ const Activities: React.FC = () => {
     
     const filterSelectClasses = "flex-grow md:w-auto p-2.5 border border-slate-300 rounded-lg bg-white text-slate-700 focus-visible:ring-2 focus-visible:ring-indigo-500 focus:outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200";
 
+    // Define search button class based on theme
+    let searchButtonClass = "w-full md:w-auto px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors dark:ring-offset-slate-800 hc-button-primary-override";
+    if (isAurora) {
+        // Blue Lightsaber style - #00B7FF is Deep Sky Blue
+        searchButtonClass = "w-full md:w-auto px-6 py-2.5 bg-[#00B7FF] text-white font-semibold rounded-lg hover:bg-[#0099CC] focus:outline-none focus:ring-2 focus:ring-[#00B7FF] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors shadow-[0_0_15px_rgba(0,183,255,0.6)] border border-[#00B7FF] hc-button-primary-override";
+    }
+
     return (
         <div className="space-y-6">
             <p className="text-slate-500 dark:text-slate-400 hc-text-secondary">Encontre e realize suas atividades escolares.</p>
@@ -226,7 +294,7 @@ const Activities: React.FC = () => {
                 <button
                     onClick={() => handleSearch(false)}
                     disabled={isSearching}
-                    className="w-full md:w-auto px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors dark:ring-offset-slate-800 hc-button-primary-override"
+                    className={searchButtonClass}
                 >
                     {isSearching && !hasSearched ? <SpinnerIcon className="h-5 w-5 text-white" /> : (
                         <>

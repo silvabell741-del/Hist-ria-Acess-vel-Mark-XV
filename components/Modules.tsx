@@ -10,6 +10,7 @@ import { StudentAcademicContext } from '../contexts/StudentAcademicContext';
 import { TeacherAcademicContext } from '../contexts/TeacherAcademicContext';
 import { saveModuleOffline, removeModuleOffline, listOfflineModules } from '../utils/offlineManager';
 import { useToast } from '../contexts/ToastContext';
+import { useSettings } from '../contexts/SettingsContext';
 
 const PlayIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -24,7 +25,11 @@ const ModuleCard: React.FC<{
     downloadState: ModuleDownloadState;
     onToggleDownload: (module: Module) => void;
 }> = React.memo(({ module, onStartModule, downloadState, onToggleDownload }) => {
-    
+    const { theme } = useSettings();
+    const isAurora = theme === 'galactic-aurora';
+    const isDragon = theme === 'dragon-year';
+    const isEmerald = theme === 'emerald-sovereignty';
+
     const isCompleted = module.progress === 100;
     const buttonText = isCompleted ? 'Revisar' : (module.progress && module.progress > 0) ? 'Continuar' : 'Iniciar';
 
@@ -38,16 +43,49 @@ const ModuleCard: React.FC<{
     const displayMateria = Array.isArray(module.materia) ? module.materia.join(', ') : module.materia;
     const displaySeries = Array.isArray(module.series) ? module.series.join(', ') : module.series;
 
+    let materiaTagClass = 'bg-indigo-50 text-indigo-700 border border-indigo-100 dark:bg-slate-600 dark:text-slate-200 dark:border-slate-500';
+    let seriesTagClass = 'bg-blue-50 text-blue-700 border border-blue-100 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600';
+    let buttonClass = "mt-5 w-full font-bold py-3 px-4 rounded-lg text-white bg-gradient-to-r from-blue-500 to-green-400 hover:from-blue-600 hover:to-green-500 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center hc-button-primary-override";
+
+    if (isAurora) {
+        materiaTagClass = 'bg-black text-[#D90429] border border-[#D90429]/30';
+        seriesTagClass = 'bg-black text-[#00B4D8] border border-[#00B4D8]/30';
+        // Aurora Galática Purple Style (#6A0DAD)
+        buttonClass = "mt-5 w-full font-bold py-3 px-4 rounded-lg text-white bg-[#6A0DAD] hover:bg-[#580b9e] border border-[#6A0DAD] transition-all duration-300 shadow-[0_0_15px_rgba(106,13,173,0.5)] hover:shadow-[0_0_25px_rgba(106,13,173,0.8)] flex items-center justify-center hc-button-primary-override";
+    } else if (isDragon) {
+        materiaTagClass = 'bg-[#5d0e0e] text-[#ffd700] border border-[#b71c1c]'; // Imperial Red bg, Gold text
+        seriesTagClass = 'bg-[#fff8e7] text-[#5d0e0e] border border-[#5d0e0e]'; // Light Parchment bg, Red text
+        // Bamboo Green Gradient for Dragon Year
+        buttonClass = "mt-5 w-full font-bold py-3 px-4 rounded-lg text-white bg-gradient-to-r from-[#2E7D32] to-[#66BB6A] hover:from-[#1B5E20] hover:to-[#43A047] border border-[#1B5E20] transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center hc-button-primary-override";
+    } else if (isEmerald) {
+        // Doom/Latveria Theme
+        materiaTagClass = 'bg-[#064E3B] text-[#34D399] border border-[#D4AF37]'; // Emerald BG, Neon Green Text, Gold Border
+        seriesTagClass = 'bg-[#1F2937] text-[#D4AF37] border border-[#374151]'; // Gunmetal BG, Gold Text, Steel Border
+        // Energy Blast Green Gradient
+        buttonClass = "mt-5 w-full font-bold py-3 px-4 rounded-lg text-black bg-gradient-to-r from-[#059669] to-[#34D399] hover:from-[#047857] hover:to-[#10B981] border border-[#047857] transition-all duration-300 shadow-[0_0_10px_rgba(52,211,153,0.5)] hover:shadow-[0_0_20px_rgba(52,211,153,0.8)] flex items-center justify-center hc-button-primary-override";
+    }
+
+    // Acessibilidade: Criar um texto descritivo completo para o card
+    const statusDescription = isCompleted ? 'Concluído' : (module.progress && module.progress > 0) ? `Progresso: ${module.progress}%` : 'Não iniciado';
+    const fullDescription = `Módulo ${module.title}. Matéria: ${displayMateria || 'Geral'}. Série: ${displaySeries || 'Geral'}. Dificuldade: ${module.difficulty || 'Não informada'}. Status: ${statusDescription}. Descrição: ${module.description}`;
+
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md flex flex-col h-full group overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+        <div 
+            className="bg-white dark:bg-slate-800 rounded-2xl shadow-md flex flex-col h-full group overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            role="article"
+            aria-label={fullDescription}
+            tabIndex={0} // Torna o card focável para leitura do resumo
+        >
             <div className="relative">
+                {/* pointer-events-none na imagem garante que o toque "atravesse" a imagem e foque no Card (pai), que tem o aria-label correto */}
                 <img 
                     src={module.coverImageUrl || 'https://images.unsplash.com/photo-1519781542343-dc12c611d9e5?q=80&w=800&auto=format&fit=crop'} 
-                    alt={`Capa do módulo ${module.title}`} 
-                    className="w-full aspect-video object-cover" 
+                    alt="" // Alt vazio pois a imagem é decorativa ou descrita no label do card
+                    aria-hidden="true"
+                    className="w-full aspect-video object-cover pointer-events-none" 
                     loading="lazy" 
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" aria-hidden="true"></div>
 
                 <div className="absolute top-3 right-3 flex items-center gap-2">
                     <button
@@ -78,12 +116,12 @@ const ModuleCard: React.FC<{
                     </button>
                     
                     {module.difficulty && (
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${difficultyColor}`}>{module.difficulty}</span>
+                        <span aria-hidden="true" className={`text-xs font-bold px-2.5 py-1 rounded-full border ${difficultyColor}`}>{module.difficulty}</span>
                     )}
                 </div>
                 
                 {(module.progress !== undefined && module.progress > 0) && (
-                    <div className="absolute bottom-3 left-3 right-3 text-white">
+                    <div className="absolute bottom-3 left-3 right-3 text-white" aria-hidden="true">
                         <div className="flex justify-between items-center mb-1">
                             <span className="text-xs font-semibold" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.7)' }}>
                                 {isCompleted ? 'Concluído' : 'Progresso'}
@@ -98,18 +136,22 @@ const ModuleCard: React.FC<{
             </div>
 
             <div className="p-5 flex flex-col flex-grow">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 hc-text-primary">{module.title}</h3>
+                {/* aria-hidden="true" nos textos pois já estão no label do container pai */}
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 hc-text-primary" aria-hidden="true">{module.title}</h3>
                 
-                <div className="flex items-center flex-wrap gap-2 mt-3 text-xs font-medium">
-                    {displaySeries && <span className="px-2 py-1 rounded bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 truncate max-w-[150px]">{displaySeries}</span>}
-                    {displayMateria && <span className="px-2 py-1 rounded bg-slate-200 text-slate-700 dark:bg-slate-600 dark:text-slate-200 truncate max-w-[150px]">{displayMateria}</span>}
+                <div className="flex items-center flex-wrap gap-2 mt-3 text-xs font-medium" aria-hidden="true">
+                    {displaySeries && <span className={`px-2 py-1 rounded truncate max-w-[150px] ${seriesTagClass}`}>{displaySeries}</span>}
+                    {displayMateria && <span className={`px-2 py-1 rounded truncate max-w-[150px] ${materiaTagClass}`}>{displayMateria}</span>}
                 </div>
 
-                <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 flex-grow hc-text-secondary">{module.description}</p>
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 flex-grow hc-text-secondary" aria-hidden="true">{module.description}</p>
                 
                 <button
-                    onClick={() => onStartModule(module)}
-                    className="mt-5 w-full font-bold py-3 px-4 rounded-lg text-white bg-gradient-to-r from-blue-500 to-green-400 hover:from-blue-600 hover:to-green-500 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center hc-button-primary-override"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onStartModule(module);
+                    }}
+                    className={buttonClass}
                     aria-label={`${buttonText} módulo ${module.title}`}
                 >
                     <PlayIcon />
@@ -203,8 +245,8 @@ const Modules: React.FC = () => {
 
             // 2. Text Filter
             if (searchQuery) {
-                const lower = searchQuery.toLowerCase();
-                results = results.filter(m => m.title.toLowerCase().includes(lower));
+                const lowerQuery = searchQuery.toLowerCase();
+                results = results.filter(m => m.title.toLowerCase().includes(lowerQuery));
             }
 
             // 3. Dropdown Filters
@@ -364,7 +406,7 @@ const Modules: React.FC = () => {
                                     <option value="Não iniciado">Não iniciados</option>
                                 </select>
                                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-slate-500">
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"></path></svg>
                                 </div>
                              </div>
                          )}
@@ -380,18 +422,18 @@ const Modules: React.FC = () => {
                         <p className="text-slate-500 dark:text-slate-400">Buscando módulos...</p>
                     </div>
                 ) : displayedModules.length > 0 ? (
-                    <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in" role="list">
                         {displayedModules.map((module) => (
-                            <li key={module.id}>
+                            <div key={module.id} role="listitem">
                                 <ModuleCard 
                                     module={module} 
                                     onStartModule={startModule} 
                                     downloadState={offlineStatus[module.id] || 'not_downloaded'}
                                     onToggleDownload={handleToggleDownload}
                                 />
-                            </li>
+                            </div>
                         ))}
-                    </ul>
+                    </div>
                 ) : (
                     <Card className="text-center py-16 bg-slate-50 dark:bg-slate-800/50 border-dashed border-2 border-slate-300 dark:border-slate-700">
                         <div className="inline-block p-4 bg-white dark:bg-slate-800 rounded-full mb-4 shadow-sm">

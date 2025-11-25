@@ -293,6 +293,7 @@ const ModuleViewPage: React.FC = () => {
     
     const totalPages = contentPages.length;
     const currentPage = totalPages > 0 ? contentPages[pageIndex] : null;
+    const isLastPage = pageIndex >= totalPages - 1;
 
     const progressPercentage = totalPages > 0 ? ((pageIndex + 1) / totalPages) * 100 : 100;
 
@@ -323,8 +324,6 @@ const ModuleViewPage: React.FC = () => {
     };
 
     const handleNext = async () => {
-        const isLastPage = pageIndex >= totalPages - 1;
-
         if (isLastPage) {
             if (userRole === 'aluno') {
                 if (!navigator.onLine) {
@@ -354,6 +353,9 @@ const ModuleViewPage: React.FC = () => {
         }
     };
     
+    const finishButtonClass = isLastPage 
+        ? "bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+        : "bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600";
 
     return (
         <div className="space-y-6">
@@ -417,7 +419,7 @@ const ModuleViewPage: React.FC = () => {
                 <button
                     onClick={handleNext}
                     disabled={isCompleting || isExiting}
-                    className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 hc-button-primary-override flex items-center justify-center min-w-[140px] disabled:opacity-75 disabled:cursor-not-allowed"
+                    className={`px-6 py-2 text-white font-semibold rounded-lg hc-button-primary-override flex items-center justify-center min-w-[140px] disabled:opacity-75 disabled:cursor-not-allowed ${finishButtonClass}`}
                 >
                     {isCompleting ? (
                         <>
@@ -425,7 +427,7 @@ const ModuleViewPage: React.FC = () => {
                             <span>Finalizando...</span>
                         </>
                     ) : (
-                        pageIndex >= totalPages - 1 ? 'Concluído' : 'Próximo'
+                        isLastPage ? 'Concluir' : 'Próximo'
                     )}
                 </button>
             </div>

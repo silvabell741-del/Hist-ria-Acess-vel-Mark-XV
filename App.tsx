@@ -286,7 +286,13 @@ const MainLayout: React.FC = () => {
                     </svg>
                 </button>
                 <Header title={pageTitle} isScrolled={isScrolled} />
-                <main id="main-content" ref={mainContentRef} className="flex-1 overflow-y-auto py-6 sm:py-8 lg:py-10 px-3 sm:px-4 lg:px-6 relative" tabIndex={-1}>
+                <main 
+                    id="main-content" 
+                    ref={mainContentRef} 
+                    className="flex-1 overflow-y-auto py-6 sm:py-8 lg:py-10 px-3 sm:px-4 lg:px-6 relative" 
+                    tabIndex={-1}
+                    aria-label="Conteúdo principal"
+                >
                     <Suspense fallback={<LoadingSpinner />}>
                         <div className="h-full w-full">
                             {renderPage()}

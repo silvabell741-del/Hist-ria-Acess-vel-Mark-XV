@@ -1,7 +1,7 @@
 
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 
-export type Theme = 'light' | 'dark' | 'high-contrast' | 'sepia' | 'mn' | 'emerald-sovereignty' | 'galactic-aurora';
+export type Theme = 'light' | 'dark' | 'high-contrast' | 'mn' | 'emerald-sovereignty' | 'galactic-aurora' | 'dragon-year' | 'morning-tide' | 'akebono-dawn' | 'itoshi-sae' | 'sorcerer-supreme' | 'midnight';
 
 interface SettingsContextType {
     theme: Theme;
@@ -19,8 +19,11 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
 
     useEffect(() => {
         const savedTheme = localStorage.getItem('app-theme') as Theme | null;
-        if (savedTheme) {
+        // Cleanup for removed themes logic if user had them selected
+        if (savedTheme && savedTheme !== 'sepia' as any && savedTheme !== 'samurai-honor' as any && savedTheme !== 'arcane-copper' as any && savedTheme !== 'maasai-culture' as any && savedTheme !== 'final-judgment' as any && savedTheme !== 'kaiser-impact' as any) { 
             setTheme(savedTheme);
+        } else if (savedTheme === 'sepia' as any || savedTheme === 'samurai-honor' as any || savedTheme === 'arcane-copper' as any || savedTheme === 'maasai-culture' as any || savedTheme === 'final-judgment' as any || savedTheme === 'kaiser-impact' as any) {
+            setTheme('dragon-year'); // Default fallback
         }
         const savedHighContrastText = localStorage.getItem('app-high-contrast-text') === 'true';
         setIsHighContrastText(savedHighContrastText);
@@ -28,7 +31,7 @@ export function SettingsProvider({ children }: { children?: React.ReactNode }) {
 
     useEffect(() => {
         const root = window.document.documentElement;
-        root.classList.remove('light', 'dark', 'high-contrast', 'sepia', 'mn', 'emerald-sovereignty', 'galactic-aurora');
+        root.classList.remove('light', 'dark', 'high-contrast', 'sepia', 'mn', 'emerald-sovereignty', 'galactic-aurora', 'dragon-year', 'maasai-culture', 'samurai-honor', 'morning-tide', 'arcane-copper', 'akebono-dawn', 'final-judgment', 'itoshi-sae', 'sorcerer-supreme', 'midnight', 'kaiser-impact');
         root.classList.add(theme);
         localStorage.setItem('app-theme', theme);
     }, [theme]);

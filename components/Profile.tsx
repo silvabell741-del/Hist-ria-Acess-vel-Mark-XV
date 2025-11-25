@@ -38,11 +38,16 @@ const Profile: React.FC = () => {
      const themes: { id: Theme; label: string }[] = [
         { id: 'light', label: 'Claro' },
         { id: 'dark', label: 'Escuro' },
-        { id: 'sepia', label: 'Sépia' },
+        { id: 'midnight', label: 'Midnight (Moderno)' },
+        { id: 'morning-tide', label: 'Maré do Amanhecer' },
+        { id: 'akebono-dawn', label: 'アケボノ (Akebono)' },
+        { id: 'dragon-year', label: '龙年 (Dragão)' },
+        { id: 'galactic-aurora', label: 'Aurora' },
+        { id: 'emerald-sovereignty', label: 'Soberania' },
+        { id: 'itoshi-sae', label: 'Domínio Numérico' },
+        { id: 'sorcerer-supreme', label: 'Muryōkūsho' },
         { id: 'mn', label: 'MN' },
         { id: 'high-contrast', label: 'Alto Contraste' },
-        { id: 'emerald-sovereignty', label: 'Soberania' },
-        { id: 'galactic-aurora', label: 'Aurora' },
     ];
 
     return (

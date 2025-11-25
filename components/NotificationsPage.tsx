@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useStudentNotificationsContext } from '../contexts/StudentNotificationContext';
 import { useTeacherCommunicationContext } from '../contexts/TeacherCommunicationContext';
 import { useNavigation } from '../contexts/NavigationContext';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface NotificationsPageProps {}
 
@@ -18,22 +19,40 @@ const UrgencyIndicator: React.FC<{ urgency: 'low' | 'medium' | 'high' }> = ({ ur
     return <span className={`absolute left-0 top-0 bottom-0 w-1 ${color}`}></span>;
 };
 
-const NotificationItem: React.FC<{ notification: Notification; onClick: () => void }> = ({ notification, onClick }) => (
-    <a href="#" onClick={(e) => { e.preventDefault(); onClick(); }} className={`relative block p-4 transition-colors duration-200 rounded-lg ${!notification.read ? 'bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700'} hc-bg-override hc-border-override`}>
-        <UrgencyIndicator urgency={notification.urgency} />
-        <div className="pl-4">
-            <div className="flex justify-between items-start">
-                <h3 className="font-bold text-slate-800 dark:text-slate-100 hc-text-primary">{notification.title}</h3>
-                <p className="text-xs text-slate-400 dark:text-slate-500 flex-shrink-0 ml-4 hc-text-secondary">{new Date(notification.timestamp).toLocaleDateString('pt-BR')}</p>
+const NotificationItem: React.FC<{ notification: Notification; onClick: () => void; theme: string }> = ({ notification, onClick, theme }) => {
+    const isAurora = theme === 'galactic-aurora';
+    const isDragon = theme === 'dragon-year';
+    
+    let unreadBg = 'bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20';
+    let readBg = 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700';
+
+    if (isAurora) {
+        unreadBg = 'bg-[#020617] border border-indigo-900/30 hover:bg-[#0f172a]';
+        readBg = 'bg-[#0F1014] border border-slate-800 hover:bg-[#1a1b26]';
+    } else if (isDragon) {
+        // Dragon Year specific colors
+        unreadBg = 'bg-[#FFEBEE] border border-[#EF9A9A] hover:bg-[#FFCDD2]'; // Very Light Red (Paper with red tint)
+        readBg = 'bg-[#FFF8E7] border border-[#D7CCC8] hover:bg-[#F0E6D2]'; // Standard Parchment
+    }
+
+    return (
+        <a href="#" onClick={(e) => { e.preventDefault(); onClick(); }} className={`relative block p-4 transition-colors duration-200 rounded-lg ${!notification.read ? unreadBg : readBg} hc-bg-override hc-border-override`}>
+            <UrgencyIndicator urgency={notification.urgency} />
+            <div className="pl-4">
+                <div className="flex justify-between items-start">
+                    <h3 className="font-bold text-slate-800 dark:text-slate-100 hc-text-primary">{notification.title}</h3>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 flex-shrink-0 ml-4 hc-text-secondary">{new Date(notification.timestamp).toLocaleDateString('pt-BR')}</p>
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 hc-text-secondary">{notification.summary}</p>
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 hc-text-secondary">{notification.summary}</p>
-        </div>
-    </a>
-);
+        </a>
+    );
+};
 
 
 const NotificationsPage: React.FC<NotificationsPageProps> = () => {
     const { userRole } = useAuth();
+    const { theme } = useSettings();
     
     let studentData: any = {};
     if (userRole === 'aluno') {
@@ -89,7 +108,7 @@ const NotificationsPage: React.FC<NotificationsPageProps> = () => {
                     <ul className="space-y-2">
                         {notifications.map(n => (
                             <li key={n.id}>
-                                <NotificationItem notification={n} onClick={() => handleNotificationClick(n)} />
+                                <NotificationItem notification={n} onClick={() => handleNotificationClick(n)} theme={theme} />
                             </li>
                         ))}
                     </ul>
