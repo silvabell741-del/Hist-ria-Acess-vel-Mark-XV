@@ -174,7 +174,7 @@ export function useStudentContent(user: User | null) {
                 if (myClassIds.length === 0) {
                     setSearchedModules([]);
                     setIsSearchingModules(false);
-                    addToast("Você não está em nenhuma turma ativa.", "info");
+                    // Silenciosamente retorna se não houver turmas (evita notificação de erro na inicialização)
                     return;
                 }
                 const classIdsToQuery = myClassIds.slice(0, 10);
