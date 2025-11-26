@@ -1,3 +1,4 @@
+
 // FILE: vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
@@ -11,22 +12,19 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'História Acessível',
-        short_name: 'HistAcess',
-        description: 'História contada de forma simples e acessível para todos',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
+        short_name: 'História',
+        start_url: '.',
         display: 'standalone',
-        orientation: 'portrait',
-        start_url: '/',
-        lang: 'pt-BR',
+        background_color: '#ffffff',
+        theme_color: '#ffffff',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'icon-192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'icon-512.png',
             sizes: '512x512',
             type: 'image/png'
           }
